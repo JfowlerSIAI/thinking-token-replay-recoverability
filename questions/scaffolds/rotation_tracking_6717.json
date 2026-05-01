@@ -1,0 +1,6 @@
+{
+  "question_id": "rotation_tracking_6717",
+  "scaffold": "Step 1: Start facing north.\n\nStep 2: Turning left 270 degrees is the same as turning right 90 degrees.\nNorth -> East\n\nStep 3: Turn left 270 degrees again.\nEast -> South\n\nStep 4: Turn left 270 degrees again.\nSouth -> West\n\nStep 5: Turn left 180 degrees.\nWest -> East\n\nFINAL: East",
+  "wrong_scaffold": "Step 1: Start facing north.\n\nStep 2: A left turn of 270 degrees is the same as a right turn of 90 degrees. From north, that puts you facing east.\n\nStep 3: Another left 270 degrees is again the same as a right 90 degrees. From east, that puts you facing south.\n\nStep 4: A third left 270 degrees is again equivalent to a right 90 degrees. From south, that puts you facing east.\n\nStep 5: Finally, turn left 180 degrees. From east, a 180-degree turn points you west.\n\nFINAL: west",
+  "compressed": "Start: N.  \nL270: N -> E.  \nL270: E -> S.  \nL270: S -> W.  \nL180: W -> E.  \n\nFinal direction: East."
+}

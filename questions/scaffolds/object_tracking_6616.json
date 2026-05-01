@@ -1,0 +1,6 @@
+{
+  "question_id": "object_tracking_6616",
+  "scaffold": "Step 1: The ball starts under Cup C.\n\nStep 2: Swap Cup C and Cup A.\nThe ball moves with Cup C, so it is now under Cup A.\n\nStep 3: Swap Cup C and Cup D.\nThe ball is under Cup A, so this swap does not affect it.\nIt remains under Cup A.\n\nStep 4: Swap Cup A and Cup D.\nThe ball moves from Cup A to Cup D.\n\nStep 5: Swap Cup A and Cup C.\nThe ball is under Cup D, so this swap does not affect it.\nIt remains under Cup D.\n\nFINAL: Cup D",
+  "wrong_scaffold": "Step 1: Track the ball by following the cup that currently covers it after each swap.\n\nStep 2: The ball starts under Cup C.\n\nStep 3: Cup C and Cup A are swapped, so the ball moves with Cup C's position and is now under Cup A.\n\nStep 4: Cup C and Cup D are swapped. Since Cup C changes places again, the ball is now under Cup D.\n\nStep 5: Cup A and Cup D are swapped, so the ball moves from Cup D to Cup A.\n\nStep 6: Cup A and Cup C are swapped, so the ball moves from Cup A to Cup C.\n\nFINAL: Cup C",
+  "compressed": "Start: ball at C.\n\n1. Swap C <-> A: ball C -> A  \n2. Swap C <-> D: ball at A, unchanged  \n3. Swap A <-> D: ball A -> D  \n4. Swap A <-> C: ball at D, unchanged  \n\nFinal: ball is under Cup D."
+}

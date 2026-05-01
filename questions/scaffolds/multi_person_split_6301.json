@@ -1,0 +1,6 @@
+{
+  "question_id": "multi_person_split_6301",
+  "scaffold": "Step 1: Find the total amount paid.\n\n80 + 33 + 80 = 193\n\nStep 2: Split the total equally among 3 people.\n\n193 / 3 = 64.333...\n\nStep 3: Compare Yuki\u2019s payment to her fair share.\n\n80 - 64.333... = 15.666...\n\nStep 4: Round to two decimal places.\n\n15.666... \u2248 15.67\n\nFINAL: 15.67",
+  "wrong_scaffold": "Step 1: Find the total amount paid by all three people.  \n\\(80 + 33 + 80 = 193\\)\n\nStep 2: Divide the total equally among the three people to find each person\u2019s fair share.  \n\\(\\frac{193}{3} = 64.23\\)\n\nStep 3: Compare Yuki\u2019s payment to her fair share to determine how much she should get back.  \n\\(80 - 64.23 = 15.77\\)\n\nStep 4: Since Yuki paid more than her share, she is owed that amount by Hao and Wendy combined.  \n\nFINAL: 15.77",
+  "compressed": "Total bill = 80 + 33 + 80 = 193.\n\nEqual share = 193 / 3 = 64.333...\n\nYuki paid 80, so amount owed to Yuki = 80 - 193/3\n= 240/3 - 193/3\n= 47/3\n= 15.666...\n\nRounded to two decimals: **$15.67**."
+}
