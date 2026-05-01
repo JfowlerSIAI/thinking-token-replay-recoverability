@@ -45,6 +45,14 @@ from analyze import (
 )
 from analyze_mechanism import L_DOSES, load_jsonl, load_phase3_qids
 
+def _open_log(path):
+    """Open a JSONL file, transparently handling .gz suffix."""
+    import gzip
+    p = str(path)
+    if p.endswith(".gz"):
+        return gzip.open(p, "rt", encoding="utf-8")
+    return open(p, "r", encoding="utf-8")
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------

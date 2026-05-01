@@ -39,6 +39,14 @@ from pathlib import Path
 import numpy as np
 from scipy import stats as sp_stats
 
+def _open_log(path):
+    """Open a JSONL file, transparently handling .gz suffix."""
+    import gzip
+    p = str(path)
+    if p.endswith(".gz"):
+        return gzip.open(p, "rt", encoding="utf-8")
+    return open(p, "r", encoding="utf-8")
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -77,7 +85,7 @@ QWEN_VOID_CONTRASTS = {"N-B"}
 
 def load_jsonl(path: Path) -> list[dict]:
     results = []
-    with open(path) as f:
+    with _open_log(path) as f:
         for line in f:
             line = line.strip()
             if line:
@@ -88,7 +96,7 @@ def load_jsonl(path: Path) -> list[dict]:
 def load_phase3_qids(path: Path) -> set[str]:
     """Load question IDs from phase3-subset.jsonl (field is 'id')."""
     qids = set()
-    with open(path) as f:
+    with _open_log(path) as f:
         for line in f:
             line = line.strip()
             if line:

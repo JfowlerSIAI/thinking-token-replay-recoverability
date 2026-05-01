@@ -21,6 +21,8 @@ The paper has been through an unusually long audit chain (see §3.8–§3.15 of 
 ```
 paper/paper.md                       The manuscript.
 
+ERRATA.md                            Issues found post-release and how each is addressed.
+
 questions/
   selected.jsonl                     103 locked Phase 2 items with ground truth and answer_type.
   phase3-subset.jsonl                39 items used for Phase 3 mechanism deep-dive.
@@ -33,16 +35,34 @@ runner/
   ollama_client.py                   Ollama API wrapper with per-inference JSONL logging.
   condition_builder.py               Prompt construction for each condition (A through O, plus L25/L50/L75/L100).
   trace_bank.py                      B-trace bank management.
-  score.py                           Answer extraction and grading. NOTE: §3.8/§3.10 of the paper document
-                                     two scoring-pipeline bugs in this file (chat-template token leakage and
-                                     missing structured-label aliasing). The scorer is shipped as-is for
-                                     historical fidelity; reproductions should patch it per §3.15.
+  score.py                           Answer extraction and grading. NOTE: paper §3.8/§3.10 and ERRATA.md
+                                     document three bugs in this file (chat-template token leakage,
+                                     missing Box N / Cup X aliasing, period-truncation in the
+                                     "answer is" fallback). The scorer is shipped as-is for historical
+                                     fidelity; reproductions of paper §3.10+ should use
+                                     `analysis/full_correction.py`.
 
 analysis/
-  calibrate.py                       Phase 1 calibration analysis + item locking.
+  calibrate.py                       Phase 1 calibration analysis + item selection.
   validate.py                        Validation analysis: sanity checks, per-condition accuracy.
-  analyze.py                         Phase 2 confirmatory analysis (per-model GEE, ITT/PP, Holm-Bonferroni).
-  analyze_mechanism.py               Phase 3 mechanism analysis.
+  analyze.py                         Pre-registered Phase 2 analysis: per-condition accuracy and marginal
+                                     Haldane ORs with Wald CIs (descriptive ITT/PP tables only —
+                                     it explicitly does NOT do GEE). Treats observations as independent.
+  analyze_hierarchical.py            **Primary GEE analysis (paper Table 2 / §3.2 / §3.3).** Per-model
+                                     GEE Binomial/Logit with question-clustered exchangeable working
+                                     correlation and robust sandwich SEs; two-part hurdle decomposition;
+                                     Holm-Bonferroni; trial-level dose-response. Imports loaders from
+                                     analyze.py and analyze_mechanism.py.
+  analyze_mechanism.py               Phase 3 mechanism analysis (K, L25/L50/L75/L100, M, N).
+  full_correction.py                 **Full-correction analysis (paper §3.10, §3.13, §3.14, §3.15).**
+                                     Applies all three scoring fixes documented in ERRATA, then re-runs
+                                     the GEE contrasts under the corrected scorer, with question-family
+                                     decomposition and cluster-robustness sensitivity.
+
+scripts/
+  merge_16k_rerun.py                 Reconstructs the 16K-merged Phase 2 dataset from the original
+                                     Phase 2 log + the 16K-rerun log. Reproduces
+                                     outputs/confirmatory_merged/20260415/inference_log.jsonl.gz.
 
 outputs/
   osf-preregistration.md             Pre-registration text (committed to OSF before first inference).
@@ -136,19 +156,70 @@ with gzip.open("outputs/confirmatory_merged/20260415/inference_log.jsonl.gz", "r
 
 ## Reproducing the paper's contrasts
 
-The paper's analyses are run on the **merged** dataset (`outputs/confirmatory_merged/20260415/inference_log.jsonl.gz`). Use `analysis/analyze.py` for the per-model GEE contrasts and the two-part hurdle decomposition. Phase 3 dose-response and mechanism contrasts are in `analysis/analyze_mechanism.py`.
+The paper's analyses are run on the **merged** dataset
+(`outputs/confirmatory_merged/20260415/inference_log.jsonl.gz`). All analysis
+scripts now handle `.jsonl.gz` transparently (see [`ERRATA.md`](ERRATA.md) E-4).
 
-To reproduce a specific Robust Claim or sensitivity, the paper's §3.x sections cite the relevant subset, scoring regime, and contrast specification. The full-correction scoring used in §3.10 onward is *not* implemented in `runner/score.py` as shipped (see "Known scorer issues" below); a small canonicalization layer is needed.
+```bash
+# Pre-registered analysis (Haldane marginal ORs, descriptive)
+python analysis/analyze.py \
+    --log outputs/confirmatory_merged/20260415/inference_log.jsonl.gz \
+    --output-dir outputs/results/phase2/
+
+# Primary GEE analysis (paper Table 2, §3.2, §3.3)
+python analysis/analyze_hierarchical.py \
+    --phase2-log outputs/confirmatory_merged/20260415/inference_log.jsonl.gz \
+    --mechanism-log outputs/mechanism/20260412_215554/inference_log.jsonl.gz \
+    --phase3-questions questions/phase3-subset.jsonl \
+    --output-dir outputs/results/hierarchical/
+
+# Full-correction analysis (paper §3.10, §3.13, §3.14, §3.15)
+python analysis/full_correction.py \
+    --merged-log outputs/confirmatory_merged/20260415/inference_log.jsonl.gz \
+    --questions questions/selected.jsonl \
+    --output-dir outputs/results/full_correction/
+
+# Phase 3 mechanism analysis
+python analysis/analyze_mechanism.py \
+    --log outputs/mechanism/20260412_215554/inference_log.jsonl.gz \
+    --questions questions/phase3-subset.jsonl \
+    --output-dir outputs/results/phase3/
+
+# Reconstruct the merged dataset from raw inputs
+python scripts/merge_16k_rerun.py \
+    --original outputs/confirmatory/20260408_100418_inference_log.jsonl.gz \
+    --rerun outputs/confirmatory_16k/20260414_192703_qwen_b_rerun/inference_log.jsonl.gz \
+    --output /tmp/reconstructed_merged.jsonl.gz
+```
+
+To reproduce a specific Robust Claim or sensitivity, the paper's §3.x sections
+cite the relevant subset, scoring regime, and contrast specification.
 
 ## Known scorer issues (carried into the data)
 
-`runner/score.py` as shipped has two documented issues that affect every cell scored under it. Both are documented in §3.8–§3.10 of the paper, with row counts and impacted claims:
+`runner/score.py` as shipped has three documented issues that affect every
+cell scored under it. All three are documented in [`ERRATA.md`](ERRATA.md)
+and patched in `analysis/full_correction.py`:
 
-1. **Chat-template token leakage.** `extract_answer()` does not strip `<end_of_turn>` (Gemma) or `<|endoftext|>`/`<|im_start|>user` (Qwen) before string-match. Affects 206/1030 Gemma-D rows and 80/1030 Qwen-C rows most prominently.
+1. **Chat-template token leakage.** `extract_answer()` does not strip
+   `<end_of_turn>` (Gemma) or `<|endoftext|>`/`<|im_start|>user` (Qwen)
+   before string-match. Affects 206/1030 Gemma-D rows and 80/1030 Qwen-C
+   rows most prominently.
 
-2. **No structured-label aliasing.** `grade()` does exact string equality for `answer_type: "exact"`. The benchmark contains 22/52 exact-answer items whose ground truth is `"Box N"` or `"Cup X"`; both models intermittently emit bare `"N"` answers. Affects Gemma rows broadly (+27 to +86 rescues per cell), Qwen modestly.
+2. **No structured-label aliasing.** `grade()` does exact string equality
+   for `answer_type: "exact"`. The benchmark contains 22/52 exact-answer
+   items whose ground truth is `"Box N"` or `"Cup X"`; both models
+   intermittently emit bare `"N"` answers. Affects Gemma rows broadly
+   (+27 to +86 rescues per cell), Qwen modestly.
 
-Reproductions should patch these. The paper's §3.15 archived audit reports include reference fix code.
+3. **Period-truncation in the "answer is" fallback regex.** The fallback
+   regex `(?:the answer is|...)\s*(.+?)(?:\.|$)` is non-greedy and stops
+   at any period, so `"the answer is 25.92"` extracts `"25"`. Affects
+   ~48/39,550 records (0.12%), almost all profit-loss decimal answers.
+
+The shipped scorer is preserved as the historical artifact;
+`analysis/full_correction.py` applies all three fixes via
+`strip_templates`, `canonical_match`, and `extract_answer_fixed`.
 
 ## License
 

@@ -24,6 +24,14 @@ from pathlib import Path
 import numpy as np
 from scipy import stats as sp_stats
 
+def _open_log(path):
+    """Open a JSONL file, transparently handling .gz suffix."""
+    import gzip
+    p = str(path)
+    if p.endswith(".gz"):
+        return gzip.open(p, "rt", encoding="utf-8")
+    return open(p, "r", encoding="utf-8")
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -56,7 +64,7 @@ SESOI_UPPER = 1.18
 def load_primary(log_path: Path) -> list[dict]:
     """Load JSONL, exclude I_sub records."""
     results = []
-    with open(log_path) as f:
+    with _open_log(log_path) as f:
         for line in f:
             line = line.strip()
             if line:

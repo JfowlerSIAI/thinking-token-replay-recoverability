@@ -42,14 +42,14 @@ Parameter sizes reported by Ollama `/api/show`:
 ### Run 3 — Qwen B 16K sensitivity rerun
 
 - **Path:** `outputs/confirmatory_16k/20260414_192703_qwen_b_rerun/inference_log.jsonl`
-- **Records:** 367 (Qwen B only, 16K ceiling-hit sensitivity)
+- **Records:** 368 (Qwen B only, 16K ceiling-hit sensitivity)
 - **Conditions:** B (Qwen 3.5 only)
 - **Ollama version:** 0.20.6
 - **num_predict:** 16384 (doubled from Run 1's 8192)
 - **num_ctx:** 24576
 - **Selection:** records from Run 1 where Qwen B `eval_count ≥ 8190`
 - **Collection date:** 2026-04-14 → 2026-04-15 (13.2 hours wall clock)
-- **Outcome:** 163 records extracted within 16K (91.4% correct); 204 still hit ceiling
+- **Outcome:** 164 records extracted within 16K (91.4% correct); 204 still hit ceiling
 
 ## Merged dataset (used by primary analyses)
 
@@ -57,7 +57,7 @@ The primary analyses in the paper use the 16K-merged Phase 2 dataset:
 
 - **Path:** `outputs/confirmatory_merged/20260415/inference_log.jsonl`
 - **Records:** 39,550 (same count as Run 1)
-- **Construction:** Run 1 records where Qwen B did NOT hit the 8K ceiling (662 kept unchanged) + 367 replacement records from Run 3 at 16K cap + all non-Qwen-B records from Run 1 unchanged
+- **Construction:** Run 1 records where Qwen B did NOT hit the 8K ceiling (662 kept unchanged) + 368 replacement records from Run 3 at 16K cap + all non-Qwen-B records from Run 1 unchanged
 - **Script:** `scripts/merge_16k_rerun.py`
 
 ## Cross-phase version drift (known limitation)
@@ -69,7 +69,7 @@ potential confound. The paper reports these as historical controls rather than
 same-run counterfactuals. The 16K sensitivity rerun (Run 3) was collected
 under the same Ollama version as Phase 3 (0.20.6), so the merged Qwen B data
 contains Ollama version heterogeneity within a single condition (662 records
-at 0.20.2, 367 at 0.20.6). A sensitivity analysis on the 662 unchanged Phase 2
+at 0.20.2, 368 at 0.20.6). A sensitivity analysis on the 662 unchanged Phase 2
 non-ceiling Qwen B records alone would test this; we have not run it.
 
 ## Missing provenance fields (known limitation)
